@@ -1,0 +1,6 @@
+#ifndef CALCULATORTESTS_H
+#define CALCULATORTESTS_H
+
+void given_two_positive_integers_when_asked_to_add_returns_their_sum();
+
+#endif
