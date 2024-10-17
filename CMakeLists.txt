@@ -24,7 +24,8 @@ include(FetchContent)
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG df1544bcee0c7ce35cd5ea0b3eb8cc81855a4140
+    GIT_TAG v1.15.2 
+    # df1544bcee0c7ce35cd5ea0b3eb8cc81855a4140
 )
 
 # For windows: Prevent overriding the partent project's compiler/linker
