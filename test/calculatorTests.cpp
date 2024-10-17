@@ -1,4 +1,4 @@
-#include "./calculator.h"
+#include "../include/calculator.h"
 
 void given_two_positive_integers_when_asked_to_add_returns_their_sum()
 {
