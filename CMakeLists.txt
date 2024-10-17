@@ -13,9 +13,31 @@ file(GLOB_RECURSE MY_TESTS "test/*.cpp")
 add_library(${CODE_UNDER_TEST} STATIC ${MY_CODE})
 target_include_directories(${CODE_UNDER_TEST} PUBLIC include)
 
-add_library(${TEST_SPECS} STATIC ${MY_TESTS})
-target_include_directories(${TEST_SPECS} PUBLIC include)
-target_link_libraries(${TEST_SPECS} PUBLIC  ${CODE_UNDER_TEST})
+# GOOGLE TEST WILL MERGE THIS WITH THE EXECUTABLE
+# add_library(${TEST_SPECS} STATIC ${MY_TESTS})
+# target_include_directories(${TEST_SPECS} PUBLIC include)
+# target_link_libraries(${TEST_SPECS} PUBLIC  ${CODE_UNDER_TEST})
 
-add_executable(${PROJNAME} "testRunner.cpp" )
-target_link_libraries(${PROJNAME} PUBLIC ${TEST_SPECS})
+# ADD GOOGLE TEST
+# USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG df1544bcee0c7ce35cd5ea0b3eb8cc81855a4140
+)
+
+# For windows: Prevent overriding the partent project's compiler/linker
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+
+# Make the fetched content (GoogleTest) available
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+# add_executable(${PROJNAME} "testRunner.cpp" )
+# target_link_libraries(${PROJNAME} PUBLIC ${TEST_SPECS})
+add_executable(${PROJNAME} ${MY_TESTS})
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gmock gtest_main)
+include(GoogleTest)
+gtest_discover_tests(${PROJNAME})
