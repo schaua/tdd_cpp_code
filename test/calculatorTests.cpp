@@ -1,22 +1,40 @@
 #include "../include/calculator.h"
 #include <gtest/gtest.h>
 
-// void given_two_positive_integers_when_asked_to_add_returns_their_sum()
-// {
-//     Calculator hp16c = Calculator {};
-//     int a = 1;
-//     int b = 2;
-//     int expected = a + b;
-//     int actual = hp16c.Add(a,b);
-//     if (expected != actual) throw expected;
-    
-// }
-TEST(CalcTest, given_two_positive_integers_when_asked_to_add_returns_their_sum)
+
+class CalcTest : public testing::Test
 {
-    Calculator hp16c = Calculator {};
+    protected:
+
+    std::unique_ptr<Calculator> hp16c;
+
+    void SetUp() override
+    {
+        hp16c = std::make_unique<Calculator>();
+        std::cout << "SetUp called" << std::endl;
+    }
+
+    void TearDown() override
+    {
+        // unique_ptr cleans up after itself
+        std::cout << "TearDown called" << std::endl;
+    }
+};
+
+TEST_F(CalcTest, given_two_positive_integers_when_asked_to_add_returns_their_sum)
+{
     int a = 1;
     int b = 2;
     int expected{a + b};
-    EXPECT_EQ(hp16c.Add(a,b), expected);
+    EXPECT_EQ(hp16c->Add(a,b), expected);
+
+}
+
+TEST_F(CalcTest, given_two_negative_integers_when_asked_to_add_returns_their_sum)
+{
+    int a = -1;
+    int b = -2;
+    int expected{a + b};
+    EXPECT_EQ(hp16c->Add(a,b), expected);
 
 }
