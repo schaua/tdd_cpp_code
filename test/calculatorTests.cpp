@@ -40,3 +40,8 @@ INSTANTIATE_TEST_SUITE_P(
         InterestTestParams{1000000,7.5,5,375000.0}
     )
 );
+
+TEST_F(InteresteCalculatorTest, NegativeTimeThrowsException)
+{
+    EXPECT_THROW(hp16c->CalculateInterest(1000,5,-1), std::invalid_argument);
+}
