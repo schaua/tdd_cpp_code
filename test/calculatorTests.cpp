@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "../include/calculator.h"
-#include "../include/rateservice.h"
-#include "../include/interestrateservice.h"
+#include "interestrateservice.h"
+
+using testing::Return;
 
 struct InterestTestParams 
 {
@@ -54,13 +56,15 @@ TEST_F(InteresteCalculatorTest, CalculateInterestAtSavingsRateOf5)
     std::string accountType{"Savings"};
     std::string bankURL{"https://mybank.com"};
     double principal{1000.0};
-    double rate{}; // to be obtained from the service
+    double rate{}; // to be obtained from mock service
     int time{1};
     double expected{50.0};
-    std::unique_ptr<RateService> interestRateService = std::make_unique<InterestRateService>(bankURL);
+    auto mockService = std::make_unique<InterestRateService>(bankURL);
+    EXPECT_CALL(*mockService, GetCurrentRate(accountType))
+    .WillOnce(Return(5.0));
 
     // Act
-    rate = interestRateService->GetCurrentRate(accountType);
+    rate = mockService->GetCurrentRate(accountType);
 
     // Assert
     EXPECT_DOUBLE_EQ(hp16c->CalculateInterest(principal, rate, time), expected);
@@ -72,13 +76,16 @@ TEST_F(InteresteCalculatorTest, CalculateInterestAtCheckingRateOf2)
     std::string accountType{"Checking"};
     std::string bankURL{"https://mybank.com"};
     double principal{1000.0};
-    double rate{}; // to be obtained from the service
+    double rate{}; // to be obtained from mock service
     int time{1};
     double expected{20.0};
-    std::unique_ptr<RateService> interestRateService = std::make_unique<InterestRateService>(bankURL);
+    auto mockService = std::make_unique<InterestRateService>(bankURL);
+    EXPECT_CALL(*mockService, GetCurrentRate(accountType))
+    .Times(1) // try changing this to 3
+    .WillOnce(Return(2.0));
 
     // Act
-    rate = interestRateService->GetCurrentRate(accountType);
+    rate = mockService->GetCurrentRate(accountType);
 
     // Assert
     EXPECT_DOUBLE_EQ(hp16c->CalculateInterest(principal, rate, time), expected);
