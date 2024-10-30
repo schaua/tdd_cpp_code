@@ -60,7 +60,7 @@ Use the notes from the slides to set up the project in a specific directory with
 
 ### Step-by-Step
 
-1. Create a new project directory called `StockPortfolio` and `cd` into that new directory.
+1. Create a new project directory called `StockPortfolio` and `cd` into that new directory.  It would be a good idea to `git init` so that the project is under version control.
 2. Add a _CMakeLists.txt_ to the directory that should look something like this:
 
 ```bash
@@ -159,7 +159,7 @@ TEST(PortfolioTest, ANewPortfolioIsInitiallyEmpty)){
 Once again we have a Red. The Portfolio class has no method named GetStockCount that returns an int. The class needs to be updated to get us back to Green. Before we jump into adding the method, it would be a good idea to consider the design. Is the count for all of the stocks, or for some specified stock? This might be something to add to the description and requirements list. For now assume that it is the count of all of the stocks held in the portfolio.
 
 5. Implement the design for now. We can always change it
-   later if a problem arises.
+   later if a problem arises.  Create the header file and the cpp file.
 
 ```cpp
 // portfolio.h
@@ -172,7 +172,9 @@ class Portfolio
     int GetStockCount() const;
 };
 #endif
-
+```
+The cpp file looks like this.
+```cpp
 // Portfolio.cpp
 #include "../include/portfolio.h"
 
