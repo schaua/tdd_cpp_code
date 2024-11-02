@@ -1,17 +1,20 @@
 # TDD Concepts Demo
 1. Develop an initial list of requirements for a calculator application.
 2. Review the list so far and pick the "easiest" requirements to write a test for as a starting point.
-3. Create a new project directory named `CalcProject` and open the directory in VS Code.
-    ```cmd
-    mkdir CalcProject
-    cd CalcProject
-    code .
-    ``` 
-4. Create a new text file named `CMakeLists.txt` in the project directory.  
+3. If necessary cCreate the project directory named `tdd_app` and open the directory in VS Code.
+```cmd
+mkdir tdd_app
+cd tdd_app
+code .
+``` 
+4. Edit or create a CMake configuration file named `CMakeLists.txt` in the project directory.  
 ```yaml
 cmake_minimum_required(VERSION 3.14...3.28)
+
 set(PROJNAME CalcProject)
+
 project(${PROJNAME})
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -19,7 +22,9 @@ file(GLOB MY_CODE "*.cpp)
 
 add_executable(${PROJNAME} ${MYCODE})
 ```
-5. Create a new file named `testRunner.cpp` and write `main` as the starting point.
+This file will use all of the files that have a cpp file extension to build the executable.  The name of the executable is assigned using the variable name PROJNAME.
+
+5. Rename the existing `main.cpp` file to `testRunner.cpp` or if it does not exist, create a new file named `testRunner.cpp`.  Define the following `main` function as the starting point.
 ```cpp
 // testRunner.cpp
 int main(int argc, char** argv)
@@ -27,7 +32,8 @@ int main(int argc, char** argv)
 
 }
 ```
-6. In `main` call the first test method.  It can be named something descriptive.  Perhaps in the pattern of Business Driven Development (i.e.  *given_preconditions_when_stateundertest_then_expectedbehavior*).  For this document assume the first test is going to be `given_two_positive_integers_when_asked_to_add_returns_their_sum`.  Update `main` to call this test.
+# **XXX** Continue here
+6. In `main` add a line to call the first test function.  It should be named something descriptive such as something in the pattern of Business Driven Development (i.e.  *given_preconditions_when_stateundertest_then_expectedbehavior*).  For this document assume the first test is going to be `given_two_positive_integers_when_asked_to_add_returns_their_sum`.  Update `main` to call this test.
 ```cpp
 // testRunner.cpp
 #include <iostream>
