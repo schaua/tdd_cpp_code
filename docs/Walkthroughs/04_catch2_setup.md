@@ -1,142 +1,131 @@
-# Demonstrating Google Test
+# Demonstrating Catch2 Test
+This walkthrough will add in a link to the Catch2 testing library that has been copied to a shared directory.  In this case on the same machine, but it could be any UNC path.
 
-## Option 1 Add **Google Test Library** Web Link
+## Add **Catch2 Test Library** Local Repo
 
-1. Edit `CMakeLists.txt` to add fetching googletest.
-
-```cmake
-cmake_minimum_required(VERSION 3.15...3.28)
-
-set(PROJNAME CalcProject)
-set(CODE_UNDER_TEST CalcCode)
-set(TEST_SPECS CalcTests)
-project(${PROJNAME} LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-file(GLOB_RECURSE MY_CODE "src/*.cpp")
-file(GLOB_RECURSE MY_TESTS "test/*.cpp")
-
-# define a new target named code_under_test to make the code under test
-# available to the test runner
-add_library(${CODE_UNDER_TEST} STATIC ${MY_CODE})
-target_include_directories(${CODE_UNDER_TEST} PUBLIC include)
-
-# GOOGLE TEST WILL MERGE THIS WITH THE EXECUTABLE
-# add_library(${TEST_SPECS} STATIC ${MY_TESTS})
-# target_include_directories(${TEST_SPECS} PUBLIC include)
-# target_link_libraries(${TEST_SPECS} PUBLIC ${CODE_UNDER_TEST})
-
-# ADD GOOGLE TEST
-# USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.15.2 # latest release tag
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Make the fetched content (GoogleTest) available
-FetchContent_MakeAvailable(googletest)
-
-enable_testing()
-
-# GOOGLE TEST WILL PROVIDE THE main METHOD
-#add_executable(${PROJNAME} "testRunner.cpp")
-#target_link_libraries(${PROJNAME} PUBLIC ${TEST_SPECS})
-add_executable(${PROJNAME} ${MY_TESTS})
-target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gmock gtest_main)
-include(GoogleTest)
-gtest_discover_tests(${PROJNAME})
-
-```
-
-## Option 2 Add **Google Test Library** Local Repo
-
-1. Clone the googletest repository.
+1. The assumption is that the Catch2 repository has already been cloned to a subdirectory of the projects directory on othe current C: drive.  Otherwise, clone the repo.
 
 ```cmd
-# change directory to  /c/projects or some other location as you wish
-git clone https://github.com/google/googletest.git
+# change directory to  /c/projects (or some other location if you wish)
+git clone https://github.com/catchorg/Catch2.git
 ```
 
-Edit `CMakeLists.txt` to add fetching googletest.
+2. Edit `CMakeLists.txt` to remove the first file glob location, add `FetchContent` for the testing library and `enable_testing`.
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.28)
-
-set(PROJNAME CalcProject)
-set(CODE_UNDER_TEST CalcCode)
-set(TEST_SPECS CalcTests)
-project(${PROJNAME} LANGUAGES CXX)
-
+cmake_minimum_required(VERSION 3.10...3.28)
+set (PROJNAME CalcProject)
+set (CODE_UNDER_TEST CalcCode)
+project(${PROJNAME} VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE MY_CODE "src/*.cpp")
-file(GLOB_RECURSE MY_TESTS "test/*.cpp")
+# locations for the different source files
+file(GLOB_RECURSE COT_SOURCES "./src/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "./test/*.cpp")
 
-# define a new target named code_under_test to make the code under test
-# available to the test runner
-add_library(${CODE_UNDER_TEST} STATIC ${MY_CODE})
-target_include_directories(${CODE_UNDER_TEST} PUBLIC include)
+# create a library for the code under test
+add_library(${CODE_UNDER_TEST} STATIC ${COT_SOURCES})
+target_include_directories(${CODE_UNDER_TEST} PUBLIC src/include)
 
-# GOOGLE TEST WILL MERGE THIS WITH THE EXECUTABLE
-# add_library(${TEST_SPECS} STATIC ${MY_TESTS})
-# target_include_directories(${TEST_SPECS} PUBLIC include)
-# target_link_libraries(${TEST_SPECS} PUBLIC ${CODE_UNDER_TEST})
-
-# ADD GOOGLE TEST
+# ADD CATCH2 TEST
 # USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
 include(FetchContent)
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY file:///c/projects/googletest/.git
-  GIT_TAG v1.15.2 # latest release tag
+  catch2
+  GIT_REPOSITORY file:///c/projects/catch2/.git
+  GIT_TAG v3.7.1 # latest release tag
 )
 
-# For Windows: Prevent overriding the parent project's compiler/linker
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Make the fetched content (GoogleTest) available
-FetchContent_MakeAvailable(googletest)
+# Make the fetched content declared above (catch2) available
+FetchContent_MakeAvailable(catch2)
 
 enable_testing()
 
-# GOOGLE TEST WILL PROVIDE THE main METHOD
-#add_executable(${PROJNAME} "testRunner.cpp")
-#target_link_libraries(${PROJNAME} PUBLIC ${TEST_SPECS})
-add_executable(${PROJNAME} ${MY_TESTS})
-target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gmock gtest_main)
-include(GoogleTest)
-gtest_discover_tests(${PROJNAME})
-
+# create the executable using the test specifications and the runner
+add_executable(${PROJNAME} ${SOURCES} ${TEST_SOURCES})
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST})
 ```
 
-2. Delete `testRunner.cpp` since GoogleTest will now be providing the main method.
+3. Delete `testRunner.cpp` since Catch2 will now be providing the main method.
 
-## Update the test
+4. Modify the `add_executable` instruction to remove `SOURCES` from the list of source files.
 
-1. Update `calculatorTests.cpp` to include Google Test header file and to use the `TEST` macro to redefine the test and the `EXPECT_EQ` macro to replace the `if`. The `TEST` macro takes the test suite name as the first argument and the test name as the second argument.
+5. Update the `target_link_libraries` instruction to add  `Catch2::Catch2WithMain` after `${CODE_UNDER_TEST}`.
+
+6. Next add `include(Catch)` instruction to bring in `Catch`
+
+7. Finally add `catch_discover_tests(${PROJNAME})` instruction to search for tests.  
+
+The final `CMakeLists.txt` should look similar to this:
+```cmake
+cmake_minimum_required(VERSION 3.10...3.28)
+set (PROJNAME CalcProject)
+set (CODE_UNDER_TEST CalcCode)
+project(${PROJNAME} VERSION 1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# locations for the different source files
+file(GLOB_RECURSE COT_SOURCES "./src/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "./test/*.cpp")
+
+# create a library for the code under test
+add_library(${CODE_UNDER_TEST} STATIC ${COT_SOURCES})
+target_include_directories(${CODE_UNDER_TEST} PUBLIC src/include)
+
+# ADD CATCH2 TEST
+# USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
+include(FetchContent)
+FetchContent_Declare(
+  catch2
+  GIT_REPOSITORY file:///c/projects/catch2/.git
+  GIT_TAG v3.7.1 # latest release tag
+)
+
+# Make the fetched content declared above (catch2) available
+FetchContent_MakeAvailable(catch2)
+
+enable_testing()
+
+# create the executable using the test specifications and the runner
+add_executable(${PROJNAME}  ${TEST_SOURCES})
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} Catch2::Catch2WithMain)
+include(Catch)
+catch_discover_tests(${PROJNAME})
+```
+
+8. Rebuild the project and make sure there are no errors.  The output should be that `No tests run` since there are no tests that use the Catch2 macros.
+
+## Update the tests
+
+1. Update `calculatorTests.cpp` to include Catch2 Test header file and to use the `TEST_CASE` macro to redefine the test and the `REQUIRE` macro to replace the `if` block. The `TEST_CASE` macro takes the test name as the first argument and an array of tags as the second argument.  (Tags can be used to filter tests.)
 
 ```cpp
 // calculatorTests.cpp
-#include "../include/calculator.h"
-#include <gtest/gtest.h>
+#include <calculator.h>
+#include <catch2/catch_test_macros.hpp>
 
-TEST(CalcTest, given_two_positive_integers_when_asked_to_add_returns_their_sum) {
+TEST_CASE("Given 1 and 2 when added returns 3", "[Caclulator]")
+{
+    Calculator hp12c;
+    int a = 1;
+    int b = 2;
+    int expected = a + b;
+    int actual = hp12c.Add(a,b);
+    REQUIRE(actual == expected);
+}
+
+TEST_CASE("Given 42 and 0 then added returns 42", "[Calculator]") {
     Calculator hp16c;
     int a = 1;
     int b = 2;
     int expected{a+b};
 
-    EXPECT_EQ(hp16c.Add(a,b), expected);
+    REQUIRE(hp16c.Add(a,b)==expected);
 }
 ```
+2.  There is no longer a reference to `calculatorTests.h` so that file can be deleted.
 
 ## Build and Run Tests
 
@@ -145,6 +134,9 @@ TEST(CalcTest, given_two_positive_integers_when_asked_to_add_returns_their_sum) 
 2. To run the tests click the triangle in the bottom status bar of VS Code.
 
 3. The output should appear in the terminal window.
-
-   There is an optional Testing Extension within VS Code. The one extra requirement that the extension imposes is that the default glob pattern looks for targets that end with test, so it would require that the add_executable, add_link_libraries and gtest_discover_tests all be working with a name that ends with test.
-   **NOTE** You can experiment with this if you wish.
+```
+C:\projects\tdd_app>"C:/projects/tdd_app/build/CalcProject.exe"
+Randomness seeded to: 1738571504
+===============================================================================
+All tests passed (2 assertions in 2 test cases)
+```

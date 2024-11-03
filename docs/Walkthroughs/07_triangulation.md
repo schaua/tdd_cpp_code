@@ -1,131 +1,99 @@
 # Triangulation Example
 
-Lets look at a function for  calculating interest earned. 
-The function, `calculate_interest`, will take three parameters:
+Checking back on the requirements, the function for calculating interest earned should really be compounding the interest at a certain period for each of the types of accounts.  To drive the implementation of this behavior there needs to be a couple of tests written to triangulate in on the desired functionality.  Currently the `CalculateInterest` function takes , will take three parameters:
 
 - `principal`: the initial amount of money deposited.
-- `rate`: the annual interest rate (as a percentage).
-- `time`: the duration in years for which the interest is calculated.  
+- `type`: the type of account (which maps to an interest rate).
+- `term`: the duration in days for which the interest is calculated.  
 
-The function should return the interest earned based on these parameters. Start with the simplest case and progressively refine the function using TDD.
+The function returns the interest earned based on these parameters, but without any compounding of the interest. Reconsidering the design, the calculation should have an optional fourth parameter to indicate the frequency of compounding.  Start with the simplest case and progressively use the tests to refine the function using TDD.  The existing tests are fine if the frequency of compounding is the same as the term.  Add a test that compounds the interest for a 1 year CD every month.
 
-1. Write the First Test
-Start with the simplest scenario, where the principal is $1000, the rate is 5%, and the time is 1 year:
+1. Write the Next Test
+Start with the simplest scenario, where the principal is $1000, the type is CD, and the time is 1 year (365 days).  Add a fourth parameter for compounding and set it to 30 days.
 ```cpp
-TEST(CalcTests, given_1000_at_5_precent_for_1_year_interest_earned_is_50) 
-{   
-    Calculator hp16c;
-    double principal{1000.0};
-    double rate{5.0}; // 5%
-    int time{1} // 1 year
-    double expectedInterest{50.0};
-    double actualInterest = hp16c.CalculateInterest(principal, rate, time);
-    EXPECT_EQ(actualInterest, expectedInterest);
+// calculatorTests.cpp
+TEST(CalculatorTests, Given_1000_CD_For_365_Days_Compounded_30_Days_Pays_24_93_Interest)
+{
+  Calculator hp12c;
+  double principal{1000.00};
+  std::string type{"CD"};
+  int term{365};
+  int compounded(30);
+  double expected{51.16};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
 }
 ```    
-We expect the interest to be $50 for this scenario (using simple interest: principal * rate * time / 100). The initial implementation could be as simple as:
+2. As expected this will cause a test failure because there is no function with that name that takes four parameters.  Provide an overloaded version of the `CalculateInteres` function that takes the extra parameter.
 
 ```cpp
 // Calculator.h
-double CalculateInterest(double principal, double rate, int time);
+#ifndef CALCULATOR_H
+#define CALCULATOR_H
+#include <string>
+#include <map>
+class Calculator
+{
+    public:
+    int Add(int a, int b);
+    double CalculateInterest(const double principal, const std::string& type, const int term) const;
+    double CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const;
+    private:
+    std::map<const std::string, double> rates = {
+        {"CD", 0.05},
+        {"Savings", 0.03},
+        {"Checking", 0.01}
+    };
+};
+#endif
+```
+3. Still failing so add the definition of the new function to `calculator.cpp`.  This can be the small steps such as returning the literal value 51.16 testing for.
+```cpp
+double Calculator::CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const
+{
+    return 51.16;
+}
+```
+2. Write another test for the term of five years for a savings account compounded monthly.  This test is using triangulation to force changing to the compound interest calculation that interest paid amount is P*(1+rate/times)^(times*years) minus the original principal.  
 
+```cpp
+TEST(CalculatorTests, Given_1000_Savings_For_5_Years_Compounded_30_Days_Pays_161_79_Interest)
+{
+  Calculator hp12c;
+  double principal{1000.00};
+  std::string type{"Savings"};
+  int term{365*5};
+  int compounded(30);
+  double expected{161.79};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
+}
+```
+3. The definition of the function is driven to use the actual formula. The current implementation (return 51.16) will fail, so modify the implementation to calculate the compount interest correctly:
+
+```cpp
 // Calculator.cpp
-double Calculator::CalculateInterest(double principal, double rate, int time)
+double Calculator::CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const
 {
-    return 50.0;
-}
+    int times = term / compounded;
+    int years = term / 365;
+    double rate = rates.at(type);
 
-```
-This implementation hardcodes the result, but it passes the test.
-
-2. Write a Second Test
-
-Now, write a test for a different rate:
-```cpp
-TEST(CalcTests, given_1000_at_10_precent_for_1_year_interest_earned_is_100) 
-{   
-    Calculator hp16c;
-    double principal{1000.0};
-    double rate{10.0}; // 10%
-    int time{1} // 1 year
-    double expectedInterest{100.0};
-    double actualInterest = hp16c.CalculateInterest(principal, rate, time);
-    EXPECT_EQ(actualInterest, expectedInterest);
-}  
-```
-This test forces the function to consider varying interest rates. The current implementation (return 50) will fail, so we modify the implementation to calculate the interest dynamically:
-
-```cpp
-// Calculator.cpp
-double Calculator::CalculateInterest(double principal, double rate, int time)
-{
-    return principal * rate / 100 * time;
-}
-
-```
-This new implementation works for both one-year tests with different rates.
-
-3.  Write a Test for Multiple Years
-
-To move towards a more generalized solution, add a test where the duration (time) is more than 1 year:
-```cpp
-
-TEST(CalcTests, given_1000_at_5_precent_for_2_year_interest_earned_is_100)
-{
-    Calculator hp16c;
-    double principal{1000.0};
-    double rate{5.0}; // 10%
-    int time{2} // 2 years
-    double expectedInterest{100.0};
-    double actualInterest = hp16c.CalculateInterest(principal, rate, time);
-    EXPECT_EQ(actualInterest, expectedInterest);
-}
-```
-The current implementation should already pass this test because it takes time into account in the formula. This confirms that our function handles multiple years correctly.
-
-4. Test Edge Cases (e.g., Zero Values)
-Next, we test edge cases, such as when the principal or time is zero:
-```cpp
-TEST(CalcTests, given_0_at_5_precent_for_1_year_interest_earned_is_0)
-{
-
-}
-
-TEST(CalcTests, 
-given_1000_at_5_precent_for_0_year_interest_earned_is_0)
-{
-
-}
-```
-These tests ensure that when the principal or time is zero, the interest is correctly calculated as zero. Our current implementation should pass these tests as well.
-
-5.  Add a Test for a Negative Interest Rate  
-
-To further validate the function, we add a test for an edge case where the interest rate is negative (representing, for example, a fee or loss scenario):
-```cpp
-TEST(CalcTests, given_1000_at_negative_5_precent_for_1_year_interest_earned_is_negative_50)
-{
-
-}
-```
-This test forces the function to handle negative rates, which the current implementation should already support.
-
-6. Test Large Values 
-
-Finally, test the function with larger values to ensure it performs correctly:
-```cpp
-TEST(CalcTests, 
-given_1000000_at_7_5_precent_for_5_year_interest_earned_is_375000)
-{
+    double amount = principal * std::pow((1 + rate/times),(times*years));
+    return amount - principal;
     
 }
+
 ```
-The implementation should pass this test without any further modifications, demonstrating that it can handle large inputs correctly.
+4.  This will require adding `#include <cmath>` to the `calculator.cpp` file.
 
-Summary
-In this, the process of triangulation is clear:
+5. The tests drive the definition towards a more generalized solution to the problem.
 
-We start with a simple test and a hardcoded solution.
-We progressively add tests for different rates, durations, and edge cases, driving the design of the function step by step.
-Each new test forces us to refine the implementation until we arrive at a general solution that works for various scenarios.
-This TDD approach ensures that the function calculate_interest is correct, efficient, and handles a broad range of inputs as expected in financial calculations.
+
+## Summary
+The process of triangulation goes from a simple solution to the test to a solutoin that accurately meets the business requirements.
+
+- We start with a simple test and a hardcoded solution.
+- We progressively add tests driving the design of the function step by step.
+- Each new test forces us to refine the implementation until we arrive at a general solution that works for various scenarios.
+- This TDD approach ensures that the function calculate_interest is correct, efficient, and handles a broad range of inputs as expected in financial calculations.
