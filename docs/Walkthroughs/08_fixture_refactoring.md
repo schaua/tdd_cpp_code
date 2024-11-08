@@ -1,53 +1,109 @@
-# Test Fixture
+# Test Refactoring with Fixture
 
-## Add the test fixture 
-1. Update `calculatorTests.cpp` to add a new Google Test fixture class. This class should inherit from the `Test` class in the google test library.  It is in the `testing` namespace The fixture uses the resource name with a 'Test' suffix by convention.
+## Adding a test fixture
+When refactoring tests, it is frequently possible to identify setup and teardown behavior that is common with the tests.  Most of the test frameworks provide some mechanism to run standard setup before each test.  In the case of GoogleTest, this is done be defining a new class that inherits from testing::Test and allows the override of the SetUp and TearDown functions.  The fixture class if commonly defined within the same file as the tests since it is usually specific to that set of tests in how to setup the scenario.
 
-2. Use the `TEST_F` macro for each test that needs the shared setup and teardown. The `TEST_F` macro takes the test fixture class name as the first argument and the test name as the second argument. 
-
+1. Edit `calculatorTests.cpp` to add a new Google Test fixture class above the current tests. The new class should publicly inherit from the `testing::Test` class in the google test library.  The class name is `Test` and it is in the `testing` namespace. By convention the name of the fixture class is the object under test followed by the suffix `Test`.  The name chosen in this step reuses the existing test suite name for the current tests.
 ```cpp
 // calculatorTests.cpp
-#include "../include/calculator.h"
-#include <gtest/gtest.h>
-
-class CalcTest : testing::Test
+// below the includes, and above the tests
+class CalculatorTests : public testing::Test
 {
-    std::unique_ptr<Calculator> hp16c;
-
+  protected:
+    Calculator hp12c;
+    double principal;
+    int term;
+    std::string type;
+  public:
     void SetUp() override
     {
-        hp16c = std::make_unique<Calculator>();
+        // any additional resources can be initialized here
+        principal = 1000.0;
+        term = 365;
+        type = "CD";
         std::cout << "SetUp called" << std::endl;
     }
 
     void TearDown() override
     {
-        // unique_ptr automatically cleans up after itself
+        // cleans up goes here
         std::cout << "TearDown called" << std::endl;
     }
 };
+```
 
-TEST_F(CalcTest, given_two_positive_integers_when_asked_to_add_returns_their_sum) {
+2. To activate the test fixture, change the `TEST` macro to be the `TEST_F` macro for each test that needs the shared fields, setup and teardown. The `TEST_F` macro takes the test fixture class name as the first argument and the test name as the second argument. 
+
+3. Now remove any duplicate code in the tests that has been moved to the fixture. Such as the declaration of the Calculator object and the initialization of the principal, term and type.  If any of these values need to be different they can be reassigned in a particular tests
+
+```cpp
+
+TEST_F(CalculatorTests, Given_1_and_2_when_added_returns_3)
+{
+    int a = 1;
+    int b = 2;
+    int expected = a + b;
+    int actual = hp12c.Add(a,b);
+    EXPECT_EQ(actual,expected);
+}
+
+TEST_F(CalculatorTests, Given_42_and_0_then_added_returns_42) 
+{
     int a = 1;
     int b = 2;
     int expected{a+b};
 
-    EXPECT_EQ(hp16c->Add(a,b), expected);
+    EXPECT_EQ(hp12c.Add(a,b),expected);
 }
 
-TEST_F(CalcTest, given_two_negative_integers_when_asked_to_add_returns_their_sum) {
-    int a = -1;
-    int b = -2;
-    int expected{a+b};
-
-    EXPECT_EQ(hp16c->Add(a,b), expected);
+TEST_F(CalculatorTests, Given_1000_CD_For_182_Days_Pays_24_93_Interest)
+{
+  int term{182};
+  double expected{24.93};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
 }
 
+
+TEST_F(CalculatorTests, Given_1000_Savings_For_365_Days_Pays_30_Interest)
+{
+  std::string type{"Savings"};
+  double expected{30.0};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
+}
+
+TEST_F(CalculatorTests, Given_1000_Checking_For_365_Days_Pays_10_Interest)
+{
+  std::string type{"Checking"};
+  double expected{10.0};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
+}
+
+TEST_F(CalculatorTests, Given_1000_CD_For_365_Days_Compounded_30_Days_Pays_50_16_Interest)
+{
+  int compounded(30);
+  double expected{51.16};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
+}
+
+TEST_F(CalculatorTests, Given_1000_Savings_For_5_Years_Compounded_30_Days_Pays_161_79_Interest)
+{
+  std::string type{"Savings"};
+  int term{365*5};
+  int compounded(30);
+  double expected{161.79};
+  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
+  EXPECT_DOUBLE_EQ(actual, expected);
+}
 ```
-## Build and Run Tests  
+4. Build the project and correct any compiler errors.
 
-1. Now you can build your project using the CMake extension.
+5. Run the tests and confirm that all still pass.
 
-2. To run the tests click the triangle in the bottom status bar of VS Code.
+3. Notice the output, generated by the `std::cout` messages,  that appear in the terminal window.  `SetUp` is executed before every single test and `TearDown` is executed after every single test. (Add some output in the test if you need to prove this.)
 
-3. The output, including the `std::cout` messages,  should appear in the terminal window.  
+## Summary
+It is not only code that should be considered during refactoring.  The tests are likely to develop repetative code that can be moved to a fixture.  There is a question about whether this refactoring makes the tests easier to read, as now the fixture code needs to be considered as part of each test, but is not readily visible.

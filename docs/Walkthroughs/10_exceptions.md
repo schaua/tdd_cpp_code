@@ -1,34 +1,38 @@
 # Exception Test Example
 
-The previous walkthrough refactored the tests to use parameters.  While working on this the question came up as to what to do about a negative time in calculating the interest.  
+The previous walkthrough refactored the tests to use parameters.  While working on this test set the question might come up.  +_What to do about a negative term when calculating the interest_.  
 
-Reviewing this with the product owner it has been decided that the code should throw an invalid argument exception when that scenario arises.
+Reviewing this scenario with the product owner it has been decided that the code should throw an invalid argument exception when a negative term is submitted.
 
-1. Add a new TEST_F to the test code.  There is really no need for the Arrange section of the test, and the Act and Assert are combined since we what the action to generate an exception.
+1. Add a new TEST_F to the test file.  The test can jump right to the Assert that is a negative value is provided for term that it will cause an exception.
 
 ```cpp
-TEST_F(InterestCalculatorTest, NegativeTimeThrowsException) 
+TEST_F(CalculatorTests, Given_negative_term_then_throws_invalid_argument)
 {
-    EXPECT_THROW(hp16c->CalculateInterest(1000, 5, -1), std::invalid_argument);
+    EXPECT_THROW(hp12c.CalculateInterest(1000,"CD", -365, 365), std::invalid_argument);
 }
 ```
-2. Run the test and it should fail.   
-3. Add code to the function under test to check that the time argument is not less than zero.
-4. If it is less than zero, throw a std::invalid_argument which requires an include for `<stdexcept>` be added to `calculator.cpp`.
+2. Run the tests and the new one should fail.  That is as expected since there is no check on negative term values in the code.  
+
+3. Add code to the `CalculateInterest` function so that it checks that the term argument is not less than zero.  
+
+4. If it is less than zero, throw a `std::invalid_argument` with a suitable message.  
+
 ```cpp
-#include <stdexcept>
-
-// ...
-
-double Calculator::CalculateInterest(double principal, double rate, int time)
+// partial listing of calculator.cpp
+double Calculator::CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const
 {
-    // Negative time is nonsense
-    if (time < 0)
-        throw std::invalid_argument(
-            "Time cannot be a negative value"
-    );
+    if (term < 0) throw std::invalid_argument("Term cannot be a negative value!");
+    int times = term / compounded;
+    double years = term / 365.0;
+    double rate = rates.at(type);
 
-    return principal * rate / 100 * time;
+    double amount = principal * std::pow((1 + rate/times),(times*years));
+    return amount - principal;
+    
 }
 ```
-5. Confirm that the test now passes.  
+5. Confirm that all of the tests now passes.  
+
+## Summary
+Using `EXPECT_THROW` or `ASSERT_THROW` will allow the test to pass if an exception is thrown, and will fail if no exception is thrown.  The exception will not interrupt the other tests or the test runner.

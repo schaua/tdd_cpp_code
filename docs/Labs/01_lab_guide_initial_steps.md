@@ -15,7 +15,7 @@ The stock portfolio application tracks stocks owned by a specified owner. It sho
 The technical requirements are as listed:
 
 1. Create a portfolio by assigning it to a specified owner.
-2. When initially create the portfolio will not contain any stock certificates.
+2. When initially created the portfolio will not contain any stock certificates.
 3. A quantity of stock certificates for a specified ticker symbol can be purchased. When a purchase has been completed the quantity of stocks in the portfolio will be increased. If stocks are sold the quantity of stocks in the portfolio will be decreased.
 4. Stock purchases need to keep track of the date, the quantity and the unit price of the stock at the time of purchase.
 5. The application will provide a service that will track the current trading price of the stocks.
@@ -60,160 +60,177 @@ Use the notes from the slides to set up the project in a specific directory with
 
 ### Step-by-Step
 
-1. Create a new project directory called `StockPortfolio` and `cd` into that new directory.  It would be a good idea to `git init` so that the project is under version control.
-2. Add a _CMakeLists.txt_ to the directory that should look something like this:
+1. Create a new project directory called `StockPortfolio` and `cd` into that new directory.  It would be a good idea to `git init` so that the project is under version control.  This would also be the time to add a `.gitignore` file to ignore the `build` directory.  If the project is being worked on by multiple developers, it would also be good to ignore the `.vscode` directory where personal configuration for Visaual Studio Code is stored. To be safe ignore any binary files as well.  The contents of the `.gitignore` file should look something like the following:  
+
+```txt
+# ignore the build output files
+build/   
+# ignore the VS Code settings
+.vscode/ 
+# ignore any executable output
+*.exe    
+*.dll  
+```
+
+2. Create the `CMakeLists.txt` in the directory that defines the instructions for building the project.  This file should look something like this:
 
 ```bash
-cmake_minimum_required(VERSION 3.15...3.28)
-set(PROJNAME StockPortfolio)
-set(CODE_UNDER_TEST StockPortfolioCode)
-set(TEST_SPECS StockPortfolioTests)
-
-project(${PROJNAME} LANGUAGES CXX)
-
+cmake_minimum_required(VERSION 3.10...3.28)
+set (PROJNAME StockPortfolio)
+set (CODE_UNDER_TEST StockPortfolioCode)
+project(${PROJNAME} VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE MY_CODE_UNDER_TEST "src/*.cpp")
-file(GLOB_RECURSE MY_TEST_SPECS "test/*.cpp")
+# locations for the different source files
+file(GLOB_RECURSE COT_SOURCES "./src/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "./test/*.cpp")
 
-add_library(${CODE_UNDER_TEST} STATIC ${MY_CODE_UNDER_TEST})
+# create a library for the code under test
+add_library(${CODE_UNDER_TEST} STATIC ${COT_SOURCES})
 target_include_directories(${CODE_UNDER_TEST} PUBLIC src/include)
-target_compile_features(${CODE_UNDER_TEST} PUBLIC cxx_std_20)
 
+# ADD GOOGLETEST TEST
+# USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.15.2
+  GIT_REPOSITORY file:///c/projects/googletest/.git
+  GIT_TAG v1.15.2 # latest release tag
 )
 
-# For Windows: Prevent overriding the parent project's compiler/linker
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Make the fetched content (GoogleTest) available
+# Make the fetched content declared above (googletest) available
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
-add_executable(${TEST_SPECS} ${MY_TEST_SPECS})
-target_link_libraries(${TEST_SPECS} PUBLIC ${CODE_UNDER_TEST} gtest gmock gtest_main)
+
+# create the executable using the test specifications and the runner
+add_executable(${PROJNAME}  ${TEST_SOURCES})
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gtest_main)
 include(GoogleTest)
-gtest_discover_tests(${TEST_SPECS})
+gtest_discover_tests(${PROJNAME})
 ```
 
-3. Add the three sub-directories mentioned in the CMakeLists
-
-- _include_
-- _test_
-- _src_
-
+3. Add the three sub-directories mentioned in the CMakeLists with `include` being a sub-directory of `src`.  
+```txt
+ StockPortfolio
+ |
+ | - src
+ |   |
+ |   | - include
+ |
+ | - test
+```
 ## Step 3 Write a failing test
 
-Write the first test by adding a file to the _test_ directory. Have the test check that when a portfolio is initially created by assigning the `owner_id` that it contains zero stocks. Add in code for the first test. The test will immediately fail.
+Write the first test by adding a file to the `test` directory. The test can check that when a portfolio is initially created by assigning the `owner_id` and that it contains zero stocks. As the code is added for the first test there will be several failures.  First the header file will not exist when added as an include.  Then a compiler error as the `Portfolio` class has not been defined.  Then an error as the constructor that takes the `owner_id` has not been declared or defined.  The an error as the `GetStockCount` function has not been declared or defined.  As each error occurs, stop and get the application to compile, then run and eventually to pass the test by slowly adding code to the project.  
+
+Either work on these steps independently, or take a look at the following detailed instructions.
 
 ### Step-by-Step
 
-1. Add _portfoliotest.cpp_ to the `test` sub-directory.
+1. Add `portfoliotests.cpp` to the `test` sub-directory.
 
-2. Edit `portfoliotest.cpp` and add the first test for the project.
-
-```cpp
-#include <gtest/gtest.h>
-#include "../include/portfolio.h"
-
-TEST(PortfolioTest, ANewPortfolioIsInitiallyEmpty){
-    int owner_id{100};
-    Portfolio portfolio(owner_id);
-}
-```
-
-Part of the process is to find out if something is failing quickly, so build the project.
-
-This is immediately a failing (Red) test because there is no _Portfolio_ class defined in the project.
-
-3. So now we look at the minimum code necessary to get the test back to passing. That would be to define the _Portfolio_ class.
-
-- Add the _portfolio.h_ file to the _src/include_ sub-directory.
-- Edit `portfolio.h` and add the class declaration.
-
-```cpp
-class Portfolio {};
-```
-
-The test should now be passing (Green). Good, but it really doesn't test anything yet.
-
-4. Expand the current test to better describe the requirement.
+2. Edit `portfoliotests.cpp` and add the first test for the project.
 
 ```cpp
 #include <gtest/gtest.h>
-#include "../include/portfolio.h"
+#include <portfolio.h>
 
-TEST(PortfolioTest, ANewPortfolioIsInitiallyEmpty)){
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
     int owner_id{100};
     Portfolio portfolio{owner_id};
-    int expected{0};
-    int actual = portfolio.GetStockCount();
 }
 ```
 
-Once again we have a Red. The Portfolio class has no method named GetStockCount that returns an int. The class needs to be updated to get us back to Green. Before we jump into adding the method, it would be a good idea to consider the design. Is the count for all of the stocks, or for some specified stock? This might be something to add to the description and requirements list. For now assume that it is the count of all of the stocks held in the portfolio.
-
-5. Implement the design for now. We can always change it
-   later if a problem arises.  Create the header file and the cpp file.
-
+3. A compiler error on `Portfolio`.  This is part of the TDD process.  Correct the error by declaring the `Portfolio` class in the newly added `portfolio.h` file.
 ```cpp
-// portfolio.h
-#ifndef Portfolio_H
-#define Portfolio_H
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
 class Portfolio
 {
-    public:
-    Portfolio(int owner_id);
-    int GetStockCount() const;
+
 };
 #endif
 ```
-The cpp file looks like this.
+4. Now the error moves to the code that passes the id, as there is no such constructor.  Add a constructor to the `Portfolio`.  In-line the constructor to set an internal field with the value of the `owner_id` parameter.
 ```cpp
-// Portfolio.cpp
-#include "../include/portfolio.h"
-
-Portfolio::Portfolio(int owner_id)
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
+class Portfolio
 {
-    // there is no test to force doing something with the argument
-}
+public:
+    Portfolio(int owner_id):owner_id_(owner_id) {}
+private:
+    int owner_id_;
+};
+#endif
+```
+5. Continue to write the current test to better describe the requirement.  In particular get the stock count for all of the stocks.
 
-int Portfolio::GetStockCount() const
+```cpp
+#include <gtest/gtest.h>
+#include <portfolio.h>
+
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
+    int owner_id{100};
+    Portfolio portfolio{owner_id};
+    int expected{0};
+    int actual{portfolio.GetStockCount("*")}; // The assumption is if not symbol is passed return total count
+}
+```
+6. Once again it is Red (failing). The `Portfolio` class has no method named `GetStockCount` that returns an int. Update to get back to Green. Before jumping straight into adding the method, consider the design. The count is for all of the stocks and not some specified stock symbol.  Eventually a string will be passed as the symbol.  Should a wildcard string be passed for all, or will the lack of a symbol imply that the count is for all?   Another option would be to decide that a separate function can be defined for totol count vs specific count.  The results of this type of analysis is something to add to the description and requirements list. For now assume that the count of all of the stocks held in the portfolio if returned if an asterisk is passed inside of double quotes.
+
+7. Implement this design. We can always change it later if problems arise.  Update the header file.
+
+```cpp
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
+class Portfolio
+{
+public:
+    Portfolio(int owner_id):owner_id_(owner_id) {}
+    int GetStockCount(const std::string& symbol) const;
+private:
+    int owner_id_;
+};
+#endif
+```
+8. Add `portfolio.cpp` to the `src` directory.  The cpp file looks like this.  The test is expecting a return of 0, so just to be sure it fails when incorrectly defined, return a value of 1.
+```cpp
+#include <string>
+#include <portfolio.h>
+
+int Portfolio::GetStockCount(const std::string& symbol) const
 {
     return 1;
 }
 ```
 
-Great, now we have the required method and it compiles.
-
-6. Build the application and confirm that it now compiles. Back to Green!
-
-The test still needs to be completed from a logic standpoint. We have the arrange part, and the act part, but we need the assert part of the standard test.
-
-7. Add ASSERT or EXPECT
-
+9. Great, the required method is defined and it compiles.  Update the test to actually confirm the results are zero with the EXPECT_EQ macro.
 ```cpp
 #include <gtest/gtest.h>
-#include "../include/portfolio.h"
+#include <portfolio.h>
 
-TEST(PortfolioTest, ANewPortfolioIsInitiallyEmpty)){
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
     int owner_id{100};
     Portfolio portfolio{owner_id};
     int expected{0};
-    int actual = portfolio.GetStockCount();
+    int actual{portfolio.GetStockCount("*")}; // The assumption is if * is passed return total count
     EXPECT_EQ(actual, expected);
 }
 ```
 
-The project should still compile just fine, but now when we run the tests we are back to Red. That is a good thing. Our GetStockCount method does not return the correct results for the test to pass, so now we have a reason to go back to the code to fix that. Instead of returning the literal value 1 return the expected value, the literal value 0.
+10. Build the application and confirm that it now compiles. Back to Green for that error, but run the application and the test fails!  This is good.  GetStockCount method does not return the correct results for the test to pass, so go back to the code to fix that. Instead of returning the literal value 1 return the expected value, the literal value 0.
 
 ```cpp
-int Portfolio::GetStockCount() const
+#include <string>
+#include <portfolio.h>
+
+int Portfolio::GetStockCount(const std::string& symbol) const
 {
     return 0;
 }
@@ -221,96 +238,244 @@ int Portfolio::GetStockCount() const
 
 Now we are back to Green. The test passes. As part of the TDD cycle we have gone from Red to Green and all that remains is to eliminate duplication and refactor while making sure that we remain Green.
 
-8.  Refactoring
+11.  Now is the time to consider refactoring.  The goal is to consider the following:
 
 - Change any code that is unclear or not easily readable.
 - Eliminate duplication.  
-  In this case the test code seems clear, although adding in comments to separate the _Arrange_, _Act_ and _Assert_ sections might be useful. That should have no impact on the tests, but run them anyway to make sure.
+
+In this case the test code seems clear, although adding in comments to separate the Arrange, Act and Assert sections of the test could be useful. That should have no impact on the tests, but run them anyway to make sure.
 
 ```cpp
 #include <gtest/gtest.h>
-#include "../include/portfolio.h"
+#include <portfolio.h>
 
-TEST(PortfolioTest, ANewPortfolioIsInitiallyEmpty)){
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
     // Arrange
     int owner_id{100};
     Portfolio portfolio{owner_id};
     int expected{0};
 
     // Act
-    int actual = portfolio.GetStockCount();
+    int actual{portfolio.GetStockCount("*")}; // The assumption is if * is passed return total count
 
     // Assert
     EXPECT_EQ(actual, expected);
 }
 ```
 
-How about looking for duplication. It may a be a bit early for refactoring.
-
-9. Next Test
-   Write a new failing test that that the owner_id is stored and can be returned at some future time.
+12. Consider the next test.  Write a new failing test that checks the `owner_id` is stored, can be retrieved and cannot be changed.
 
 ```cpp
-TEST(PortfolioTest, ThePortfolioMaintainsAReadonlyOwnerId)
+TEST(PortfolioTest, Given_a_new_portfolio_get_owner_id_confirm_it_has_been_set)
 {
     // Arrange
     int owner_id{100};
     Portfolio portfolio{owner_id};
-    int expected{100};
 
     // Act
-    int actual = portfolio.GetOwnerId();
-
-    // Assert
-    EXPECT_EQ(actual, expected);
+    auto actual{portfolio.GetOwnerId()};
+    
 }
 ```
-
-We are back to Red with a failing test, which means we now have permission to write some code. In order for the test to pass the `GetOwnerId` method needs to append return the currently assigned owner_id. The minimal code that is required to get the test to pass will be for the constructor to store its argument into a field and for GetOwnerId to return that field.
-
-In the header file add a new public function and private field;
-
+13.  At this point there is an error because `GetOwnerId` function does not exist.  Fix the header file.
 ```cpp
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
+class Portfolio
+{
+public:
+    Portfolio(int owner_id):owner_id_(owner_id) {}
+    int GetStockCount(const std::string& symbol) const;
     int GetOwnerId() const;
-
-    private:
-    const int owner_id_;
+private:
+    int owner_id_;
+};
+#endif
 ```
-
+14. Then fix the definition.
 ```cpp
-Portfolio::Portfolio(int owner_id): owner_id_(owner_id) {}
+#include <string>
+#include <portfolio.h>
+
+int Portfolio::GetStockCount(const std::string& symbol) const
+{
+    return 0;
+}
 
 int Portfolio::GetOwnerId() const
 {
     return owner_id_;
 }
 ```
-
-Perhaps the next test should be to buy a stock and confirm that the count increases.
-
+15. Continue writing the test.
 ```cpp
 #include <gtest/gtest.h>
-#include "../include/portfolio.h"
+#include <portfolio.h>
 
-TEST(PortfolioTest, BuyingAStockIncreasesTheCountByTheQuantity)){
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
     // Arrange
     int owner_id{100};
     Portfolio portfolio{owner_id};
-    int expected{42};
-    std::string stock{""}; // start simple
+    int expected{0};
 
     // Act
-    portfolio.BuyStock(expected, stock);
+    int actual{portfolio.GetStockCount("*")}; // The assumption is if * is passed return total count
 
     // Assert
-    EXPECT_EQ(portfolio.GetStockCount(), expected);
+    EXPECT_EQ(actual, expected);
+}
+
+TEST(PortfolioTest, Given_a_new_portfolio_get_owner_id_confirm_it_has_been_set)
+{
+    // Arrange
+    int owner_id{100};
+    Portfolio portfolio{owner_id};
+
+    // Act
+    auto actual{portfolio.GetOwnerId()};
+
+    // Assert
+    EXPECT_EQ(actual, owner_id);
+
 }
 ```
+16.  Consider what should the next test be.  Perhaps to buy a stock and confirm that the count increases for that stock symbol and remains zero for another stock symbol.  This is actually describing two tests.  These tests will drive the creation of a better data structure to store the stocks.
 
-This test uses a string to represent the stock. It is more likely that we need requirements describing the stock object.
+```cpp
+#include <gtest/gtest.h>
+#include <portfolio.h>
 
-Add the code to get back to Green and can look at refactoring. If any refactoring is done, run the tests again to make sure that everything is still passing.
+TEST(PortfolioTest, Given_a_new_portfolio_stock_count_is_zero)
+{
+    // Arrange
+    int owner_id{100};
+    Portfolio portfolio{owner_id};
+    int expected{0};
 
+    // Act
+    int actual{portfolio.GetStockCount("*")}; // The assumption is if * is passed return total count
+
+    // Assert
+    EXPECT_EQ(actual, expected);
+}
+
+TEST(PortfolioTest, Given_a_new_portfolio_get_owner_id_confirm_it_has_been_set)
+{
+    // Arrange
+    int owner_id{100};
+    Portfolio portfolio{owner_id};
+
+    // Act
+    auto actual{portfolio.GetOwnerId()};
+
+    // Assert
+    EXPECT_EQ(actual, owner_id);
+
+}
+
+TEST(PortfolioTest, Given_a_new_portfolio_the_purchase_of_10_IBM_should_return_stock_count_of_10_for_IBM)
+{
+        // Arrange
+    int owner_id{100};
+    Portfolio portfolio{owner_id};
+    int expected{10};
+
+    // Act
+    portfolio.Buy(10, "IBM");
+    int actual{portfolio.GetStockCount("IBM")}; 
+
+    // Assert
+    EXPECT_EQ(actual, expected);
+}
+```
+17.  This test will drive the writing of the Buy function.  Declared in the header.
+```cpp
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
+class Portfolio
+{
+public:
+    Portfolio(int owner_id):owner_id_(owner_id) {}
+    int GetStockCount(const std::string& symbol) const;
+    int GetOwnerId() const;
+    void Buy(const int quantity, const std::string& symbol);
+private:
+    int owner_id_;
+};
+#endif
+```
+18. Defined in the code file.
+```cpp
+#include <string>
+#include <portfolio.h>
+
+int Portfolio::GetStockCount(const std::string& symbol) const
+{
+    return 0;
+}
+
+int Portfolio::GetOwnerId() const
+{
+    return owner_id_;
+}
+
+void Portfolio::Buy(const int quantity, const std::string& symbol)
+{
+    // define the behavior will require some data structure
+}
+```
+19. The current test is failing because `GetStockCount` always returns 0.  Update `GetStockCount` to return the quantity based upon  the stock symbol.  One solution to this would be to provide a `map` of key/value pairs.  The stock symbol to the quantity owned.  More changes to the header file.
+
+```cpp
+#ifndef PORTFOLIO_H
+#define PORTFOLIO_H
+#include <map>
+
+class Portfolio
+{
+public:
+    Portfolio(int owner_id):owner_id_(owner_id) {}
+    int GetStockCount(const std::string& symbol) const;
+    int GetOwnerId() const;
+    void Buy(const int quantity, const std::string& symbol);
+private:
+    int owner_id_;
+    std::map<const std::string, int> holdings_;
+};
+#endif
+```
+20. And definition the update in `Buy` and the lookup in `GetStockCount`.
+```cpp
+#include <string>
+#include <portfolio.h>
+
+int Portfolio::GetStockCount(const std::string& symbol) const
+{
+    if (holdings_.contains(symbol))
+        return holdings_.at(symbol);
+    return 0;
+}
+
+int Portfolio::GetOwnerId() const
+{
+    return owner_id_;
+}
+
+void Portfolio::Buy(const int quantity, const std::string& symbol)
+{
+    if (holdings_.contains(symbol))
+    {
+        holdings_[symbol] += quantity;
+    }
+    else
+    {
+        holdings_[symbol] = quantity;
+    }
+}
+
+```
 ## Review TDD Thinking
 
 - Write a small failing test
