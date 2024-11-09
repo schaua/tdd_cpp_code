@@ -7,7 +7,6 @@ class Calculator
     public:
     int Add(int a, int b);
     double CalculateInterest(const double principal, const std::string& type, const int term) const;
-    double CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const;
     private:
     std::map<const std::string, double> rates = {
         {"CD", 0.05},
