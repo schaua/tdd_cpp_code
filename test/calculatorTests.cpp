@@ -2,7 +2,11 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include <memory>
-#include <interestrateservice.h>
+// #include <interestrateservice.h>
+#include "./mockservice.h"
+#include <gmock/gmock.h>
+
+using testing::Return;
 
 struct InterestTestParams 
 {
@@ -16,12 +20,22 @@ struct InterestTestParams
 class CalculatorParamTests : public ::testing::TestWithParam<InterestTestParams> 
 {
     protected:
-    Calculator hp12c{std::make_unique<InterestRateService>("https://mybank.com")};
+    std::shared_ptr<MockRateService> mockService = std::make_shared<MockRateService>("https://mybank.com");
+    Calculator hp12c{mockService};
 
-    // The setup will be driven by the data so is no longer 
-    // the same for each test.
+    void SetUp() override 
+    {
+        EXPECT_CALL(*mockService, GetCurrentRate("CD"))
+        .WillRepeatedly(Return(0.05));
 
-    // SetUp and TearDwon are available if needed.
+        EXPECT_CALL(*mockService, GetCurrentRate("Savings"))
+        .WillRepeatedly(Return(0.03));
+
+        EXPECT_CALL(*mockService, GetCurrentRate("Checking"))
+        .WillRepeatedly(Return(0.01));
+
+    }
+    // TearDwon is available if needed.
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -39,13 +53,25 @@ INSTANTIATE_TEST_SUITE_P(
 class CalculatorTests : public testing::Test
 {
   protected:
-    Calculator hp12c{std::make_unique<InterestRateService>("https://mybank.com")};
+    std::shared_ptr<MockRateService> mockService = std::make_shared<MockRateService>("https://mybank.com");
+    Calculator hp12c{mockService};
     double principal;
     int term;
     std::string type;
   public:
     void SetUp() override
     {
+        // train the mock
+
+        EXPECT_CALL(*mockService, GetCurrentRate("CD"))
+        .WillRepeatedly(Return(0.05));
+
+        EXPECT_CALL(*mockService, GetCurrentRate("Savings"))
+        .WillRepeatedly(Return(0.03));
+
+        EXPECT_CALL(*mockService, GetCurrentRate("Checking"))
+        .WillRepeatedly(Return(0.01));
+
         // any additional resources can be initialized here
         principal = 1000.0;
         term = 365;
