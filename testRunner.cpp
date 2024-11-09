@@ -1,5 +1,5 @@
 #include <iostream>
-#include "calculatorTests.h"
+#include "./test/calculatorTests.h"
 
 int main(int argc, char** argv)
 {
