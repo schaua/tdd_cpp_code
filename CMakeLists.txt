@@ -1,20 +1,34 @@
-cmake_minimum_required(VERSION 3.14...3.28)
-set(PROJNAME CalcProject) 
-# set(CODE_UNDER_TEST CalcCode)
-# set(TEST_SPECS CalcTests)
-project(${PROJNAME} LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10...3.28)
+set (PROJNAME StockPortfolio)
+set (CODE_UNDER_TEST StockPortfolioCode)
+project(${PROJNAME} VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB MY_CODE "*.cpp")
-# file(GLOB_RECURSE MY_CODE "src/*.cpp")
-# file(GLOB_RECURSE MY_TESTS "test/*.cpp")
+# locations for the different source files
+file(GLOB_RECURSE COT_SOURCES "./src/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "./test/*.cpp")
 
-# add_library(${CODE_UNDER_TEST} STATIC ${MY_CODE})
-# target_include_directories(${CODE_UNDER_TEST} PUBLIC include)
-# # target_compile_features(${CODE_UNDER_TEST} public cxx_std_20)
+# create a library for the code under test
+add_library(${CODE_UNDER_TEST} STATIC ${COT_SOURCES})
+target_include_directories(${CODE_UNDER_TEST} PUBLIC src/include)
 
-# add_library(${TEST_SPECS} STATIC ${MY_TESTS})
-# target_include_directories(${TEST_SPECS} PUBLIC include)
+# ADD GOOGLETEST TEST
+# USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY file:///c/projects/googletest/.git
+  GIT_TAG v1.15.2 # latest release tag
+)
 
-add_executable(${PROJNAME} ${MY_CODE} )
+# Make the fetched content declared above (googletest) available
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+# create the executable using the test specifications and the runner
+add_executable(${PROJNAME}  ${TEST_SOURCES})
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gtest_main)
+include(GoogleTest)
+gtest_discover_tests(${PROJNAME})
