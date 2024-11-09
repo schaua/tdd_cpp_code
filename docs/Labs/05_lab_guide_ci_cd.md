@@ -1,9 +1,11 @@
 # Lab
 ## CI/CD Pipeline using GitLab
 
-This requires an account on GitLab.com.
+This requires an account on GitLab.com.  The goal is to create a build pipeline in GitLab that will build and test the StockPortfolio project.
 
-## Setup a sample project on GitLab.com
+### Step-by-Step
+
+#### Setup a sample project on GitLab.com
 1. Create a new project under your username.
     * On the left sidebar, select `Create new (+)`.
     * Select `Create blank project`.
@@ -13,7 +15,7 @@ This requires an account on GitLab.com.
     * Select `Create project`.
 2. On the project page, in the upper-right corner select `Code`, **Not** the `</> Code` on the left sidebar, to find the clone paths for the project.  Copy the SSH or HTTP path.
 
-## Create the project locally
+#### Clone the project locally
 1. Open a terminal window on the local machine.  Navigate to where you wish to add the project code.
 ```bash
 cd /c/projects
@@ -30,7 +32,7 @@ git add --all
 git commit -m "Add initial release for project"
 git push origin
 ```
-## Begin the CI/CD pipeline configuration  
+#### Begin the CI/CD pipeline configuration  
 1. Start with a simple pipeline configuration to ensure that CI/CD is enabled in the project and that the runners are available to run jobs. 
   - Refer to the walkthrough for checking the job runners.  
 
@@ -52,7 +54,7 @@ Each job identifies a script section that defines the commands for the job.  If 
 
 > The Pipeline Editor is useful to help avoid syntax issues editing the yaml file.  The editor is available in the GitLab page under `Build | Pipeline editor`.  As changes are made they can be committed on the remote repository, **be sure to pull them** down before doing any work is done on the local machine.
 
-## Update the pipeline
+#### Update the pipeline
 1. Replace the content of `.gitlab-ci.yml` with instructions to build the C++ project using CMake.
 
 Below is a basic example of a `.gitlab-ci.yml` file for a GitLab CI/CD pipeline. This configuration defines a job that uses G++ and CMake to build a C++ application. The pipeline runs in a Docker container, and this example uses an image that already has G++ installed.  CMake is installed explicitly, just in case it is not already in the image.
@@ -111,7 +113,7 @@ build_application:
   stage: build
   script:
     - apt-get update && apt-get install -y cmake
-    - cmake -G "MinGW Makefiles" -S . -B build
+    - cmake -G "Unix Makefiles" -S . -B build
     - cmake --build build
   artifacts:
     paths:
