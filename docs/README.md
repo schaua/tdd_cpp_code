@@ -59,7 +59,8 @@ The examples work through a financial calculator application.
 9. [Refactoring with Parameters](./Walkthroughs/09_parameterized_refactoring.md)
 10. [Handling Exceptions](./Walkthroughs/10_exceptions.md)
 11. [Doubles and Mocks](./Walkthroughs/11_doubles_mock.md)
-12. [CI/CD Pipelines](./Walkthroughs/12_gitlab.md)
+12. [CI/CD Pipelines](./Walkthroughs/12_gmock_mock.md)
+13. [CI/CD Pipelines](./Walkthroughs/13_gitlab.md)
 
 The challenges are build around a stock portfolio manager application.
 
