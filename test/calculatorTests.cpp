@@ -2,6 +2,38 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
+struct InterestTestParams 
+{
+    double principal;
+    std::string type;
+    int term;
+    int compounded;
+    double expected;
+};
+
+class CalculatorParamTests : public ::testing::TestWithParam<InterestTestParams> 
+{
+    protected:
+    Calculator hp12c;
+
+    // The setup will be driven by the data so is no longer 
+    // the same for each test.
+
+    // SetUp and TearDwon are available if needed.
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    InterestTests,
+    CalculatorParamTests,
+    ::testing::Values(
+        InterestTestParams{1000, "CD", 182, 182, 24.62},        
+        InterestTestParams{1000, "Savings", 365, 365, 30.0},     
+        InterestTestParams{1000, "Checking", 365, 365, 10.0},         
+        InterestTestParams{1000, "CD", 365, 30, 51.16},              
+        InterestTestParams{1000, "Savings", 365*5, 30, 161.79}
+    )
+);
+
 class CalculatorTests : public testing::Test
 {
   protected:
@@ -44,44 +76,13 @@ TEST_F(CalculatorTests, Given_42_and_0_then_added_returns_42)
     EXPECT_EQ(hp12c.Add(a,b),expected);
 }
 
-TEST_F(CalculatorTests, Given_1000_CD_For_182_Days_Pays_24_93_Interest)
+
+TEST_P(CalculatorParamTests, CalculateInterest)
 {
-  int term{182};
-  double expected{24.93};
-  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
-  EXPECT_DOUBLE_EQ(actual, expected);
+  InterestTestParams params = GetParam();
+
+  double actual = std::trunc(hp12c.CalculateInterest(params.principal, params.type, params.term, params.compounded)*100)/100;
+
+  EXPECT_DOUBLE_EQ(actual, params.expected);
 }
 
-TEST_F(CalculatorTests, Given_1000_Savings_For_365_Days_Pays_30_Interest)
-{
-  std::string type{"Savings"};
-  double expected{30.0};
-  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
-  EXPECT_DOUBLE_EQ(actual, expected);
-}
-
-TEST_F(CalculatorTests, Given_1000_Checking_For_365_Days_Pays_10_Interest)
-{
-  std::string type{"Checking"};
-  double expected{10.0};
-  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term)*100)/100;
-  EXPECT_DOUBLE_EQ(actual, expected);
-}
-
-TEST_F(CalculatorTests, Given_1000_CD_For_365_Days_Compounded_30_Days_Pays_50_16_Interest)
-{
-  int compounded(30);
-  double expected{51.16};
-  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
-  EXPECT_DOUBLE_EQ(actual, expected);
-}
-
-TEST_F(CalculatorTests, Given_1000_Savings_For_5_Years_Compounded_30_Days_Pays_161_79_Interest)
-{
-  std::string type{"Savings"};
-  int term{365*5};
-  int compounded(30);
-  double expected{161.79};
-  double actual = std::trunc(hp12c.CalculateInterest(principal, type, term, compounded)*100)/100;
-  EXPECT_DOUBLE_EQ(actual, expected);
-}
