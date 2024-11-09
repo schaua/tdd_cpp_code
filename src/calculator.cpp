@@ -8,8 +8,7 @@ int Calculator::Add(int a, int b)
 
 double Calculator::CalculateInterest(const double principal, const std::string& type, const int term) const
 {
-    double rate = rates.at(type);
-    return principal * rate * term / 365;
+    return CalculateInterest(principal, type, term, term);
 }
 
 double Calculator::CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const
@@ -17,9 +16,11 @@ double Calculator::CalculateInterest(const double principal, const std::string& 
     if (term < 0) throw std::invalid_argument("Term cannot be a negative value!");
     int times = term / compounded;
     double years = term / 365.0;
-    double rate = rates.at(type);
+    double rate = rateService->GetCurrentRate(type);
 
     double amount = principal * std::pow((1 + rate/times),(times*years));
     return amount - principal;
     
 }
+
+

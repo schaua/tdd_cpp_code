@@ -1,6 +1,8 @@
 #include <calculator.h>
 #include <gtest/gtest.h>
 #include <cmath>
+#include <memory>
+#include <interestrateservice.h>
 
 struct InterestTestParams 
 {
@@ -14,7 +16,7 @@ struct InterestTestParams
 class CalculatorParamTests : public ::testing::TestWithParam<InterestTestParams> 
 {
     protected:
-    Calculator hp12c;
+    Calculator hp12c{std::make_unique<InterestRateService>("https://mybank.com")};
 
     // The setup will be driven by the data so is no longer 
     // the same for each test.
@@ -37,7 +39,7 @@ INSTANTIATE_TEST_SUITE_P(
 class CalculatorTests : public testing::Test
 {
   protected:
-    Calculator hp12c;
+    Calculator hp12c{std::make_unique<InterestRateService>("https://mybank.com")};
     double principal;
     int term;
     std::string type;
@@ -90,4 +92,6 @@ TEST_F(CalculatorTests, Given_negative_term_then_throws_invalid_argument)
 {
     EXPECT_THROW(hp12c.CalculateInterest(1000,"CD", -365, 365), std::invalid_argument);
 }
+
+
 
