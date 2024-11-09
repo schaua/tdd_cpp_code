@@ -1,0 +1,26 @@
+image: gcc:latest
+
+stages:
+  - build
+  - test
+
+build_application:
+  stage: build
+  script:
+    - apt-get update && apt-get install -y cmake
+    - cmake -G "Unix Makefiles" -S . -B build
+    - cmake --build build
+  artifacts:
+    paths:
+      - build/
+  only:
+    - main
+
+test_application:
+  stage: test
+  script:
+    - ./build/Demoproject # Assume the build process generates an executable named Demoproject
+  dependencies:
+    - build_application
+  only:
+    - main
