@@ -14,6 +14,7 @@ double Calculator::CalculateInterest(const double principal, const std::string& 
 
 double Calculator::CalculateInterest(const double principal, const std::string& type, const int term, const int compounded) const
 {
+    if (term < 0) throw std::invalid_argument("Term cannot be a negative value!");
     int times = term / compounded;
     double years = term / 365.0;
     double rate = rates.at(type);

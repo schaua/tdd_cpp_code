@@ -86,3 +86,8 @@ TEST_P(CalculatorParamTests, CalculateInterest)
   EXPECT_DOUBLE_EQ(actual, params.expected);
 }
 
+TEST_F(CalculatorTests, Given_negative_term_then_throws_invalid_argument)
+{
+    EXPECT_THROW(hp12c.CalculateInterest(1000,"CD", -365, 365), std::invalid_argument);
+}
+
