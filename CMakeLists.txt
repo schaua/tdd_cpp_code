@@ -29,6 +29,6 @@ enable_testing()
 
 # create the executable using the test specifications and the runner
 add_executable(${PROJNAME}  ${TEST_SOURCES})
-target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gtest_main)
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gtest_main gmock)
 include(GoogleTest)
 gtest_discover_tests(${PROJNAME})
