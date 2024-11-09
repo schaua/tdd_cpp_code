@@ -13,23 +13,22 @@ file(GLOB_RECURSE TEST_SOURCES "./test/*.cpp")
 add_library(${CODE_UNDER_TEST} STATIC ${COT_SOURCES})
 target_include_directories(${CODE_UNDER_TEST} PUBLIC src/include)
 
-# ADD GOOGLETEST TEST
+# ADD CATCH2 TEST
 # USE GIT_TAG FROM THE DESIRED COMMIT (LATEST?)
 include(FetchContent)
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY file:///c/projects/googletest/.git
-  GIT_TAG v1.15.2 # latest release tag
+  catch2
+  GIT_REPOSITORY file:///c/projects/catch2/.git
+  GIT_TAG v3.7.1 # latest release tag
 )
 
-# Make the fetched content declared above (googletest) available
-FetchContent_MakeAvailable(googletest)
+# Make the fetched content declared above (catch2) available
+FetchContent_MakeAvailable(catch2)
 
 enable_testing()
 
 # create the executable using the test specifications and the runner
 add_executable(${PROJNAME}  ${TEST_SOURCES})
-target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} gtest gtest_main)
-include(GoogleTest)
-gtest_discover_tests(${PROJNAME})
-
+target_link_libraries(${PROJNAME} PUBLIC ${CODE_UNDER_TEST} Catch2::Catch2WithMain)
+include(Catch)
+catch_discover_tests(${PROJNAME})
