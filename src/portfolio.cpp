@@ -2,20 +2,21 @@
 #include <portfolio.h>
 #include <stdexcept>
 #include <numeric>
+#include <memory>
 
 int Portfolio::GetStockCount(const std::string &symbol) const
 {
     int total_quantity{0};
 
     if (holdings_.contains(symbol))
-        total_quantity =  holdings_.at(symbol);
+        total_quantity = holdings_.at(symbol);
 
     if (symbol == "*")
         total_quantity = std::accumulate(holdings_.begin(), holdings_.end(), 0,
-            [](const int prev_sum, const std::pair<std::string, int> &entry)
-            {
-                return prev_sum + entry.second;
-            });
+                                         [](const int prev_sum, const std::pair<std::string, int> &entry)
+                                         {
+                                             return prev_sum + entry.second;
+                                         });
 
     return total_quantity;
 }
@@ -38,4 +39,21 @@ void Portfolio::Buy(const int quantity, const std::string &symbol)
     {
         holdings_[symbol] = quantity;
     }
+}
+
+double Portfolio::GetStockValue(const std::string &symbol) const
+{
+    double total_value{0.0};
+
+    if (holdings_.contains(symbol))
+        total_value = holdings_.at(symbol) * stockPriceService->GetStockPrice(symbol) ;
+
+    if (symbol == "*")
+        total_value = std::accumulate(holdings_.begin(), holdings_.end(), 0,
+            [this](const double prev_sum, const std::pair<std::string, int> &entry)
+            {
+                return prev_sum + (entry.second * stockPriceService->GetStockPrice(entry.first));
+            });
+
+    return total_value;
 }

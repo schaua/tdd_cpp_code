@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <portfolio.h>
+#include "./mockpriceservice.h"
 
 class PortfolioTest : public testing::Test
 {
@@ -82,4 +83,59 @@ TEST_F(PortfolioTest, Given_a_portfolio_the_purchase_of_negative_quantity_throws
     // Act
     // Assert 
     EXPECT_THROW(portfolio.Buy(-1, "IBM"), std::invalid_argument);
+}
+
+TEST_F(PortfolioTest, Given_a_portfolio_with_two_stocks_calculates_the_total_value)
+{
+    // Arrange
+    std::shared_ptr<MockPriceService> mock = std::make_shared<MockPriceService>();
+    
+    EXPECT_CALL(*mock, GetStockPrice("GOOGL"))
+    .WillRepeatedly(testing::Return(125.0));
+    
+    EXPECT_CALL(*mock, GetStockPrice("IBM"))
+    .WillRepeatedly(testing::Return(100.0));
+
+    Portfolio portfolio{100, mock};
+   
+    portfolio.Buy(10, "IBM"); // 10 @ 100
+    portfolio.Buy(20, "GOOGL"); // 20 @ 125
+    double expected((10*100)+(20*125));
+
+    // Act
+    double actual = portfolio.GetStockValue("*");
+
+    // Assert
+    EXPECT_EQ(actual, expected);
+}
+
+TEST_F(PortfolioTest, Given_a_portfolio_with_two_stocks_calculates_the_individual_values)
+{
+    // Arrange
+    std::shared_ptr<MockPriceService> mock = std::make_shared<MockPriceService>();
+    
+    EXPECT_CALL(*mock, GetStockPrice("GOOGL"))
+    .WillOnce(testing::Return(125.0));
+    
+    EXPECT_CALL(*mock, GetStockPrice("IBM"))
+    .WillOnce(testing::Return(100.0));
+
+    Portfolio portfolio{100, mock};
+   
+    portfolio.Buy(10, "IBM"); // 10 @ 100
+    portfolio.Buy(20, "GOOGL"); // 20 @ 125
+    double expectedIBM(10*100);
+    double expectedGOOGL(20*125);
+    // Act
+    double actualIBM = portfolio.GetStockValue("IBM");
+    // The mock has been trainined to respond if called once
+    // uncomment the following line and run the test to see
+    // how the mock responds if the mocked method is called
+    // twice.
+    // actualIBM = portfolio.GetStockValue("IBM");
+    double actualGOOGL = portfolio.GetStockValue("GOOGL");
+
+    // Assert
+    EXPECT_EQ(actualIBM, expectedIBM);
+    EXPECT_EQ(actualGOOGL, expectedGOOGL);
 }
